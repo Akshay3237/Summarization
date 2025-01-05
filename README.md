@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # textsummarize
 
 A new Flutter project.
@@ -14,3 +15,7 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+=======
+# Summarization
+summarization is project which base on summary of text,video call.
+>>>>>>> ecd2632995d8e5552c0182a4dcc2c42044cf3345
