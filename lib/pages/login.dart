@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:textsummarize/dependencies/dependencies.dart';
+import 'package:textsummarize/services/IAuthenticateService.dart';
+import 'home.dart';
 import 'register.dart';
 
 class LoginPage extends StatefulWidget {
@@ -12,7 +15,14 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  late Iauthenticateservice authService;
 
+  @override
+  void initState() {
+    super.initState();
+    // Initializing authService via dependency injection
+    authService = Injection.getInstance<Iauthenticateservice>(Iauthenticateservice.typeName, true);
+  }
   @override
   void dispose() {
     _emailController.dispose();
@@ -20,12 +30,36 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _login() {
+  void _login() async {
     if (_formKey.currentState!.validate()) {
       // Handle login logic here
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login Successful!')),
-      );
+      // Extract form data
+      String email = _emailController.text.trim();
+      String password = _passwordController.text.trim();
+
+      // Call login method from IAuthService
+      var result = await authService.login(email, password);
+
+      // Check the result
+      if (result.first) {
+        // Login successful
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Login Successful!')),
+        );
+
+        // Navigate to homepage after successful login
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const HomePage(), // Assuming HomePage is your next screen
+          ),
+        );
+      } else {
+        // Login failed
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Login Error: ${result.second.toString()}")),
+        );
+      }
     }
   }
 

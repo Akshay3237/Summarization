@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:textsummarize/models/Pair.dart';
+import 'package:textsummarize/services/IUserService.dart';
+import '../dependencies/dependencies.dart';
+import '../models/User.dart';
+import '../services/IAuthenticateService.dart';
+import 'home.dart';
 import 'login.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -15,6 +21,10 @@ class _RegisterPageState extends State<RegisterPage> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
+  // Initialize your AuthService instance
+  final Iauthenticateservice authService =Injection.getInstance<Iauthenticateservice>(Iauthenticateservice.typeName, true);
+  final IUserService userService =Injection.getInstance<IUserService>(IUserService.typeName, true);
+
   @override
   void dispose() {
     _fullNameController.dispose();
@@ -24,12 +34,56 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
-  void _register() {
+  // Register method
+
+  void _register() async {
     if (_formKey.currentState!.validate()) {
-      // Handle registration logic here
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Registration Successful!')),
-      );
+      // Extract form data
+      String email = _emailController.text.trim();
+      String password = _passwordController.text.trim();
+      String fullName = _fullNameController.text.trim();
+
+      // Step 1: Attempt to register the user with FirebaseAuth
+      var registrationResult = await authService.register(email, password);
+
+      // Check if registration was successful
+      if (registrationResult.first) {
+        // Step 2: After registration, log the user in immediately
+        var loginResult = await authService.login(email, password);
+
+        // Check if login was successful
+        if (loginResult.first) {
+          // Step 3: Once logged in, save additional user data to Firestore
+            User user=new User(fullname: fullName,email: email);
+
+            Pair<bool,Object> result= await userService.save(user);
+            // Step 4: Navigate to home page
+
+            if(result.first){
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const HomePage(), // Change HomePage with your actual homepage
+                ),
+              );
+            }
+            else{
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("Login Error: ${result.second.toString()}")),
+              );
+            }
+        } else {
+          // Handle login failure
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Login Error: ${loginResult.second.toString()}")),
+          );
+        }
+      } else {
+        // Handle registration failure
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Registration Error: ${registrationResult.second.toString()}")),
+        );
+      }
     }
   }
 

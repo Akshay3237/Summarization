@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "713512622317",
+    "project_id": "textsummarize-d63dd",
+    "storage_bucket": "textsummarize-d63dd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:713512622317:android:3913b903e2f280d81014e4",
+        "android_client_info": {
+          "package_name": "com.example.textsummarize"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCE3qUN1FDLZXOBy1H2ygVZIHbcIvCXzx0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

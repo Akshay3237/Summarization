@@ -1,8 +1,21 @@
-import 'package:textsummarize/models/User.dart';
+import '../models/Pair.dart';
+
 
 abstract class Iauthenticateservice{
-  Map<bool,String>Register(User user);
-  Map<bool,String>Login(String email,String password);
-  Map<bool,String>IsAlreadyLoggedIn();
-  Map<bool,String>LogOut();
+  static const String typeName = "IAuthService";
+
+  // Initialize database
+  Future<Pair<bool, Object>> initializing();
+
+  // Return authenticated user
+  Future<Pair<bool, Object>> getAuth();
+
+  // Register user in respective database
+  Future<Pair<bool, Object>> register(String email, String password);
+
+  // Login user with checking in respective database
+  Future<Pair<bool, Object>> login(String email, String password);
+
+  // Logout user
+  Future<Pair<bool, Object>> logout();
 }

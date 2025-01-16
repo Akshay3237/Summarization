@@ -1,14 +1,10 @@
 class User {
   String? fullname;
   String? email;
-  String? password;
-  String? confirmPassword;
 
   User({
     this.fullname,
     this.email,
-    this.password,
-    this.confirmPassword,
   });
 
   // Factory constructor to create a User object from JSON
@@ -16,8 +12,6 @@ class User {
     return User(
       fullname: json['fullname'],
       email: json['email'],
-      password: json['password'],
-      confirmPassword: json['confirmPassword'],
     );
   }
 
@@ -26,8 +20,6 @@ class User {
     return {
       'fullname': fullname,
       'email': email,
-      'password': password,
-      'confirmPassword': confirmPassword,
     };
   }
 }
