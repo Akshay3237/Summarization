@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:textsummarize/dependencies/dependencies.dart';
 import 'dart:convert';
+
+import 'package:textsummarize/services/ISummarizeService.dart';
 
 class TextSummarizerPage extends StatefulWidget {
   const TextSummarizerPage({Key? key}) : super(key: key);
@@ -15,7 +18,7 @@ class _TextSummarizerPageState extends State<TextSummarizerPage> {
   bool _isLoading = false;
 
   final String apiUrl = "https://api.apyhub.com/ai/summarize-url"; // Replace with your API URL
-
+  Isummarizeservice summariseService=Injection.getInstance<Isummarizeservice>(Isummarizeservice.typeName, true);
   Future<void> _summarizeText() async {
     String inputText = _textController.text;
 
