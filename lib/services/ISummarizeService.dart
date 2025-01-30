@@ -1,8 +1,7 @@
 import '../models/Pair.dart';
 
-abstract class Isummarizeservice{
+abstract class ISummarizeService {
   static const String typeName = "ISummarizeService";
 
-  Future<Pair<bool,Object>> getSummary();
-
+  Future<Pair<bool, List<String>>> getSummary(String text);
 }

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:textsummarize/dependencies/dependencies.dart';
-import 'dart:convert';
-
-import 'package:textsummarize/services/ISummarizeService.dart';
+import '../models/Pair.dart';
+import '../services/ISummarizeService.dart';
 
 class TextSummarizerPage extends StatefulWidget {
   const TextSummarizerPage({Key? key}) : super(key: key);
@@ -14,47 +12,34 @@ class TextSummarizerPage extends StatefulWidget {
 
 class _TextSummarizerPageState extends State<TextSummarizerPage> {
   final TextEditingController _textController = TextEditingController();
-  String _summary = "";
+  List<String> _summary = [];
   bool _isLoading = false;
 
-  final String apiUrl = "https://api.apyhub.com/ai/summarize-url"; // Replace with your API URL
-  Isummarizeservice summariseService=Injection.getInstance<Isummarizeservice>(Isummarizeservice.typeName, true);
-  Future<void> _summarizeText() async {
-    String inputText = _textController.text;
+  ISummarizeService summarizeService = Injection.getInstance<ISummarizeService>(
+      ISummarizeService.typeName, true);
 
+  Future<void> _summarizeText() async {
+    String inputText = _textController.text.trim();
     if (inputText.isEmpty) {
       setState(() {
-        _summary = "Please enter text to summarize.";
+        _summary = ["Please enter text to summarize."];
       });
       return;
     }
 
     setState(() {
       _isLoading = true;
-      _summary = ""; // Clear the summary while loading
+      _summary = [];
     });
 
     try {
-      // Make the API request
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'text': inputText}), // Adjust payload as per your API
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() {
-          _summary = data['summary'] ?? "No summary returned from the API.";
-        });
-      } else {
-        setState(() {
-          _summary = "Failed to summarize text. Error: ${response.statusCode}";
-        });
-      }
+      Pair<bool, List<String>> result = await summarizeService.getSummary(inputText);
+      setState(() {
+        _summary = result.first ? result.second : ["Error: Summarization failed."];
+      });
     } catch (e) {
       setState(() {
-        _summary = "An error occurred: $e";
+        _summary = ["An error occurred while summarizing."];
       });
     } finally {
       setState(() {
@@ -86,22 +71,25 @@ class _TextSummarizerPageState extends State<TextSummarizerPage> {
             ElevatedButton(
               onPressed: _isLoading ? null : _summarizeText,
               child: _isLoading
-                  ? const CircularProgressIndicator(
-                color: Colors.white,
-              )
+                  ? const CircularProgressIndicator(color: Colors.white)
                   : const Text('Summarize'),
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: SingleChildScrollView(
-                child: Text(
-                  _summary,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+              child: _summary.isNotEmpty
+                  ? ListView.builder(
+                itemCount: _summary.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    child: Text(
+                      "- ${_summary[index]}",
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  );
+                },
+              )
+                  : const Center(child: Text("Your summary will appear here.")),
             ),
           ],
         ),
