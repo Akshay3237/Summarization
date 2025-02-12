@@ -1,6 +1,8 @@
 
+import 'package:textsummarize/FireBaseImplementation/FireBaseVideoCallService.dart';
 import 'package:textsummarize/FireBaseImplementation/UserService.dart';
 import 'package:textsummarize/services/IAuthenticateService.dart';
+import 'package:textsummarize/services/IServiceVideoCall.dart';
 import 'package:textsummarize/services/IUserService.dart';
 
 import '../FireBaseImplementation/authenticateservice.dart';
@@ -34,6 +36,13 @@ class Injection {
     }
     else if(t==ISummarizeService.typeName){
       T instance = SummarizeService() as T;
+      if (isSingleton) {
+        _singletons[t] = instance as Object;
+      }
+      return instance;
+    }
+    else if(t==IServiceVideoCall.typeName){
+      T instance = FireBaseVideoCallService() as T;
       if (isSingleton) {
         _singletons[t] = instance as Object;
       }

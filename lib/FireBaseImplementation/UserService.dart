@@ -10,7 +10,7 @@ import '../models/User.dart';
 
 class FireBaseUserService implements IUserService{
 
-
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
 
   @override
@@ -26,9 +26,31 @@ class FireBaseUserService implements IUserService{
   }
 
   @override
-  Future<Pair<bool, Object>> findByMail(String mailId) {
-    // TODO: implement findByMail
-    throw UnimplementedError();
+  Future<Pair<bool, Object>> findByMail(String mailId) async {
+    try {
+      // Searching for the user in the Firestore database (assuming you're looking in the 'users' collection)
+      QuerySnapshot querySnapshot = await _firestore
+          .collection('users') // Or 'videoCalls', depending on where you store the email
+          .where('email', isEqualTo: mailId)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        // Email found, return true and the user data
+        var userDoc = querySnapshot.docs.first;
+        var data=userDoc.data();
+        if(data!=null)
+          return Pair(true, data);
+        else{
+          return Pair(false, 'User not found');
+        }
+      } else {
+        // Email not found, return false and an appropriate error message
+        return Pair(false, 'User not found');
+      }
+    } catch (e) {
+      // Catching any errors and returning failure status with error message
+      return Pair(false, 'Error: $e');
+    }
   }
 
   @override

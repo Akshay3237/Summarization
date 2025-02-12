@@ -33,7 +33,7 @@ class DrawerWidget extends StatelessWidget {
             context,
             icon: Icons.video_call,
             label: 'Video Call',
-            destination: const VideoCallPage(),
+            destination:  VideoCallPage(),
           ),
           _buildDrawerItem(
             context,
