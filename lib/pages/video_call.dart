@@ -43,7 +43,8 @@ class _VideoCallPageState extends State<VideoCallPage> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) =>CallScreen(meetingId: _callId!,),
+          builder: (context) =>CallScreen(meetingId: _callId!,isCaller: true,),
+          // builder: (context) =>CallScreen(meetingId: _callId!),
         ),
       );
     }
@@ -66,7 +67,8 @@ class _VideoCallPageState extends State<VideoCallPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => CallScreen(meetingId: enteredCallId),
+              builder: (context) => CallScreen(meetingId: enteredCallId,isCaller: false,),
+              // builder: (context) => CallScreen(meetingId: enteredCallId),
             ),
           );
         } else if (status == 'rejected') {
