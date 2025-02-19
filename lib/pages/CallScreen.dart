@@ -44,16 +44,19 @@ class _CallScreenState extends State<CallScreen> {
       "audio": true,
       "video": {
         "mandatory": {
-
+          "minWidth": '640',
+          "minHeight": '480',
           "minFrameRate": '30',
         },
-
+        "facingMode": "user",
+        "optional": [],
       }
     };
 
     MediaStream stream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
-    // _localRenderer.srcObject = stream;
-    // _remoteRenderer.srcObject = stream; // Currently, remote shows local stream
+    await Future.delayed(Duration(milliseconds: 500)); // Allow WebRTC to initialize
+    _localRenderer.srcObject = stream;
+    _remoteRenderer.srcObject = stream; // Currently, remote shows local stream
 
     setState(() {
       _localStream = stream;
