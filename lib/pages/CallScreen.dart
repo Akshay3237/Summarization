@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
@@ -14,29 +15,114 @@ class _CallScreenState extends State<CallScreen> {
   final RTCVideoRenderer _localRenderer = RTCVideoRenderer();
   final RTCVideoRenderer _remoteRenderer = RTCVideoRenderer();
   MediaStream? _localStream;
+  RTCPeerConnection? _peerConnection;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   bool startContainer = false;
-  bool showSmallCamera = true; // Toggle small camera visibility
-
+  bool showSmallCamera = true;
   bool isMicOn = true;
   bool isCameraOn = true;
-
   bool isRemoteMicOn = true;
   bool isRemoteCameraOn = true;
-
-  double xPos = 20; // Initial X position of small container
-  double yPos = 50; // Initial Y position of small container
+  double xPos = 20;
+  double yPos = 50;
 
   @override
   void initState() {
     super.initState();
     initRenderers();
     startLocalStream();
+    setupWebRTC();
   }
 
   Future<void> initRenderers() async {
     await _localRenderer.initialize();
     await _remoteRenderer.initialize();
+  }
+
+  Future<void> setupWebRTC() async {
+    _peerConnection = await createPeerConnection({"iceServers": [{"urls": "stun:stun.l.google.com:19302"}]}, {});
+    _localStream?.getTracks().forEach((track) {
+      _peerConnection?.addTrack(track, _localStream!);
+    });
+
+    _peerConnection?.onIceCandidate = (RTCIceCandidate candidate) {
+      _firestore.collection("message").doc(widget.meetingId).set({
+        'candidates': FieldValue.arrayUnion([candidate.toMap()]),
+      }, SetOptions(merge: true));
+    };
+
+    _peerConnection?.onTrack = (RTCTrackEvent event) {
+      if (event.streams.isNotEmpty) {
+        setState(() {
+          _remoteRenderer.srcObject = event.streams[0];
+        });
+      }
+    };
+
+    listenForICECandidates();
+
+    if (widget.isCaller) {
+      createOffer();
+    } else {
+      listenForOffer();
+    }
+  }
+
+  Future<void> createOffer() async {
+    RTCSessionDescription offer = await _peerConnection!.createOffer();
+    await _peerConnection!.setLocalDescription(offer);
+    await _firestore.collection("message").doc(widget.meetingId).set({
+      'offer': offer.toMap(),
+    });
+  }
+
+  void listenForOffer() {
+    _firestore.collection("message").doc(widget.meetingId).snapshots().listen((snapshot) async {
+      if (snapshot.exists && snapshot.data()?['offer'] != null) {
+        RTCSessionDescription offer = RTCSessionDescription(
+          snapshot.data()!['offer']['sdp'],
+          snapshot.data()!['offer']['type'],
+        );
+        await _peerConnection!.setRemoteDescription(offer);
+        createAnswer();
+      }
+    });
+  }
+
+  Future<void> createAnswer() async {
+    RTCSessionDescription answer = await _peerConnection!.createAnswer();
+    await _peerConnection!.setLocalDescription(answer);
+    await _firestore.collection("message").doc(widget.meetingId).set({
+      'answer': answer.toMap(),
+    }, SetOptions(merge: true));
+  }
+
+  void listenForAnswer() {
+    _firestore.collection("message").doc(widget.meetingId).snapshots().listen((snapshot) async {
+      if (snapshot.exists && snapshot.data()?['answer'] != null) {
+        RTCSessionDescription answer = RTCSessionDescription(
+          snapshot.data()!['answer']['sdp'],
+          snapshot.data()!['answer']['type'],
+        );
+        await _peerConnection!.setRemoteDescription(answer);
+      }
+    });
+  }
+
+  void listenForICECandidates() {
+    _firestore.collection("message").doc(widget.meetingId).snapshots().listen((snapshot) async {
+      if (snapshot.exists && snapshot.data()?['candidates'] != null) {
+        List<dynamic> candidates = snapshot.data()?['candidates'];
+        for (var candidate in candidates) {
+          await _peerConnection!.addCandidate(RTCIceCandidate(
+            candidate['candidate'],
+            candidate['sdpMid'],
+            candidate['sdpMLineIndex'],
+          ));
+        }
+      }
+    });
   }
 
   Future<void> startLocalStream() async {
@@ -54,14 +140,24 @@ class _CallScreenState extends State<CallScreen> {
     };
 
     MediaStream stream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
-    await Future.delayed(Duration(milliseconds: 500)); // Allow WebRTC to initialize
+    await Future.delayed(Duration(milliseconds: 500));
     _localRenderer.srcObject = stream;
-    _remoteRenderer.srcObject = stream; // Currently, remote shows local stream
 
     setState(() {
       _localStream = stream;
     });
   }
+
+  @override
+  void dispose() {
+    _localRenderer.dispose();
+    _remoteRenderer.dispose();
+    _localStream?.dispose();
+    _peerConnection?.close();
+    super.dispose();
+  }
+
+
 
   void toggleMic() {
     if (_localStream != null) {
@@ -107,13 +203,6 @@ class _CallScreenState extends State<CallScreen> {
     }
   }
 
-  @override
-  void dispose() {
-    _localRenderer.dispose();
-    _remoteRenderer.dispose();
-    _localStream?.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -266,4 +355,6 @@ class _CallScreenState extends State<CallScreen> {
           : null,
     );
   }
+
+
 }
