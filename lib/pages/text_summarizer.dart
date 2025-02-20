@@ -35,7 +35,7 @@ class _TextSummarizerPageState extends State<TextSummarizerPage> {
     try {
       Pair<bool, List<String>> result = await summarizeService.getSummary(inputText);
       setState(() {
-        _summary = result.first ? result.second : ["Error: Summarization failed."];
+        _summary = result.first ? result.second : result.second;
       });
     } catch (e) {
       setState(() {
