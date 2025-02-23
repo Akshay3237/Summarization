@@ -64,6 +64,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '713512622317',
     projectId: 'textsummarize-d63dd',
     storageBucket: 'textsummarize-d63dd.firebasestorage.app',
+    iosClientId: '713512622317-eqhvn1ftliscsajq24en8r3edq9tbagp.apps.googleusercontent.com',
     iosBundleId: 'com.example.textsummarize',
   );
 
@@ -73,6 +74,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '713512622317',
     projectId: 'textsummarize-d63dd',
     storageBucket: 'textsummarize-d63dd.firebasestorage.app',
+    iosClientId: '713512622317-eqhvn1ftliscsajq24en8r3edq9tbagp.apps.googleusercontent.com',
     iosBundleId: 'com.example.textsummarize',
   );
 
@@ -85,4 +87,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'textsummarize-d63dd.firebasestorage.app',
     measurementId: 'G-CVGYVD7393',
   );
+
 }

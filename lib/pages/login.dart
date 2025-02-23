@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:textsummarize/dependencies/dependencies.dart';
 import 'package:textsummarize/services/IAuthenticateService.dart';
+import '../models/Pair.dart';
 import 'home.dart';
 import 'register.dart';
 
@@ -63,11 +64,25 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  void _signUpWithGoogle() {
-    // Handle Google sign-up logic here
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Google Sign-Up Coming Soon!')),
-    );
+  void _signUpWithGoogle() async{
+    Pair<bool, Object> result = await authService.loginWithGoogle();
+    if (result.first) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result.second.toString())),
+      );
+      // Navigate to home  screen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const HomePage(), // Assuming HomePage is your next screen
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Google Sign-In Failed: ${result.second}")),
+      );
+      print(result.second);
+    }
   }
 
   @override
