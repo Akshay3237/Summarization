@@ -7,7 +7,7 @@ class SummarizeService implements ISummarizeService {
   final String apiUrl = 'http://127.0.0.1:5000/summarize'; // Flask API URL
 
   @override
-  Future<Pair<bool, List<String>>> getSummary(String text) async {
+  Future<Pair<bool, List<String>>> getSummary(String text, int maxLength, String summaryType) async {
     try {
       // Send the text to the Flask API for summarization
       final response = await http.post(

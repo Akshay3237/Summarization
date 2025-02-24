@@ -1,12 +1,13 @@
 
 import 'package:textsummarize/FireBaseImplementation/FireBaseVideoCallService.dart';
 import 'package:textsummarize/FireBaseImplementation/UserService.dart';
+import 'package:textsummarize/Implementation1/SummarizeGeminiService.dart';
 import 'package:textsummarize/services/IAuthenticateService.dart';
 import 'package:textsummarize/services/IServiceVideoCall.dart';
 import 'package:textsummarize/services/IUserService.dart';
 
 import '../FireBaseImplementation/authenticateservice.dart';
-import '../Implementation/SummarizeService.dart';
+import '../Implementation1/SummarizeService.dart';
 import '../services/ISummarizeService.dart';
 
 class Injection {
@@ -35,7 +36,7 @@ class Injection {
       return instance;
     }
     else if(t==ISummarizeService.typeName){
-      T instance = SummarizeService() as T;
+      T instance = SummarizeGeminiService() as T;
       if (isSingleton) {
         _singletons[t] = instance as Object;
       }

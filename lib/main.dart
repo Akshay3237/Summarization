@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:textsummarize/dependencies/dependencies.dart';
 import 'package:textsummarize/models/Pair.dart';
 import 'package:textsummarize/pages/CallScreen.dart';
@@ -7,6 +8,16 @@ import 'package:textsummarize/services/IAuthenticateService.dart';
 import './pages/login.dart';
 
 void main() async {
+  try{
+    await dotenv.load(fileName: '.env');
+  }
+  catch(e){
+    print(e);
+    runApp(
+    ErrorWidget(e.toString())
+    );
+    return;
+  }
   WidgetsFlutterBinding.ensureInitialized();  // Ensure Flutter is initialized
 
   Iauthenticateservice authService=Injection.getInstance<Iauthenticateservice>(Iauthenticateservice.typeName, true);
@@ -16,6 +27,9 @@ void main() async {
   if (!result.first) {
     // Handle Database initialization failure
     print("Database initialization failed: ${result.second}");
+    runApp(
+        ErrorWidget(result.second)
+    );
     return; // Exit or handle the failure accordingly
   }
 
