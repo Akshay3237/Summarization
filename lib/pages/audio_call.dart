@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'audio_summarize.dart';
+
 class AudioCallPage extends StatelessWidget {
   const AudioCallPage({Key? key}) : super(key: key);
 
@@ -9,11 +11,8 @@ class AudioCallPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Audio Call'),
       ),
-      body: const Center(
-        child: Text(
-          'Hello, I am Audio Caller',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
+      body: Center(
+        child: AudioSummarize()
       ),
     );
   }
