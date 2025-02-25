@@ -12,7 +12,7 @@ class AudioCallPage extends StatelessWidget {
         title: const Text('Audio Call'),
       ),
       body: Center(
-        child: AudioSummarize()
+        child: Text("Audio calling feature is given here")
       ),
     );
   }

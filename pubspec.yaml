@@ -42,7 +42,7 @@ dependencies:
   flutter_webrtc: ^0.12.5
   google_sign_in: ^6.2.2
   flutter_dotenv: ^5.2.1
-  speech_to_text: ^7.0.0
+  speech_to_text: ^6.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

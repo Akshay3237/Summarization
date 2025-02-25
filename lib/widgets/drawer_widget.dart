@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:textsummarize/pages/audio_summarize.dart';
 import '../pages/text_summarizer.dart';
 import '../pages/video_call.dart';
 import '../pages/audio_call.dart';
@@ -28,6 +29,12 @@ class DrawerWidget extends StatelessWidget {
             icon: Icons.text_fields,
             label: 'Text Summarize',
             destination: const TextSummarizerPage(),
+          ),
+          _buildDrawerItem(
+            context,
+            icon:Icons.mic,
+            label: 'Audio Summarize',
+            destination: AudioSummarize(),
           ),
           _buildDrawerItem(
             context,

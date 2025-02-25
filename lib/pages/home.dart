@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:textsummarize/pages/audio_summarize.dart';
 import '../widgets/build_button.dart';
 import '../widgets/drawer_widget.dart';
 import '../pages/text_summarizer.dart';
@@ -37,6 +38,18 @@ class HomePage extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (context) => const TextSummarizerPage(),
+                      ),
+                    );
+                  },
+                ),
+                BuildButton(
+                  icon: Icons.mic,
+                  label: 'Audio Summarize',
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AudioSummarize(),
                       ),
                     );
                   },

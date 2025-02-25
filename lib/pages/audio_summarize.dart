@@ -24,54 +24,71 @@ class _AudioSummarizeState extends State<AudioSummarize> {
   @override
   void initState() {
     super.initState();
-    _speech = stt.SpeechToText();
+    try {
+      _speech = stt.SpeechToText();
+    } catch (e) {
+      print("Error initializing speech recognition: $e");
+    }
   }
 
   /// Start Listening
   void _startListening() async {
-    bool available = await _speech.initialize(
-      onStatus: (status) => print("Status: $status"),
-      onError: (error) => print("Error: $error"),
-    );
-
-    if (available) {
-      setState(() => _isListening = true);
-      _speech.listen(
-        onResult: (result) {
-          setState(() {
-            textListened= result.recognizedWords; // Append text
-          });
-        },
-        listenMode: stt.ListenMode.dictation,
-        partialResults: true,
+    try {
+      bool available = await _speech.initialize(
+        onStatus: (status) => print("🔵 Status: $status"),
+        onError: (error) => print("❌ Error: $error"),
+        debugLogging: true,  // Enables debug logs
+        finalTimeout: Duration(seconds: 5),  // Timeout for speech recognition
+        options: [stt.SpeechToText.androidIntentLookup], // Ensures Android speech lookup
       );
+
+      if (available) {
+        setState(() => _isListening = true);
+        _speech.listen(
+          onResult: (result) {
+            setState(() {
+              textListened = result.recognizedWords; // Append text
+            });
+          },
+          listenMode: stt.ListenMode.dictation,
+          partialResults: true,
+        );
+      } else {
+        print("Speech recognition is not available on this device.");
+      }
+    } catch (e) {
+      print("Error starting speech recognition: $e");
     }
   }
 
   /// Stop Listening
   void _stopListening() {
-    setState(() => _isListening = false);
-    _speech.stop();
+    try {
+      setState(() => _isListening = false);
+      _speech.stop();
+    } catch (e) {
+      print("Error stopping speech recognition: $e");
+    }
   }
 
   /// Summarize Transcribed Text
   Future<void> _summarizeText() async {
-    String lengthText = _lengthController.text.trim();
-    int maxLength = lengthText.isNotEmpty ? int.tryParse(lengthText) ?? 150 : 150;
-
-    if (textListened.isEmpty) {
-      setState(() {
-        _summary = ["No text available to summarize."];
-      });
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-      _summary = [];
-    });
-
     try {
+      String lengthText = _lengthController.text.trim();
+      int maxLength = lengthText.isNotEmpty ? int.tryParse(lengthText) ?? 150 : 150;
+
+      if (textListened.isEmpty) {
+        setState(() {
+          _summary = ["No text available to summarize."];
+        });
+        return;
+      }
+
+      setState(() {
+        _isLoading = true;
+        _summary = [];
+      });
+
       Pair<bool, List<String>> result = await summarizeService.getSummary(
           textListened, maxLength, _summaryType);
 
@@ -79,6 +96,7 @@ class _AudioSummarizeState extends State<AudioSummarize> {
         _summary = result.second;
       });
     } catch (e) {
+      print("Error summarizing text: $e");
       setState(() {
         _summary = ["Error occurred during summarization."];
       });
@@ -136,9 +154,13 @@ class _AudioSummarizeState extends State<AudioSummarize> {
                           value: "Extractive",
                           groupValue: _summaryType,
                           onChanged: (value) {
-                            setState(() {
-                              _summaryType = value.toString();
-                            });
+                            try {
+                              setState(() {
+                                _summaryType = value.toString();
+                              });
+                            } catch (e) {
+                              print("Error changing summarization type: $e");
+                            }
                           },
                         ),
                         const Text("Extractive"),
@@ -147,9 +169,13 @@ class _AudioSummarizeState extends State<AudioSummarize> {
                           value: "Abstractive",
                           groupValue: _summaryType,
                           onChanged: (value) {
-                            setState(() {
-                              _summaryType = value.toString();
-                            });
+                            try {
+                              setState(() {
+                                _summaryType = value.toString();
+                              });
+                            } catch (e) {
+                              print("Error changing summarization type: $e");
+                            }
                           },
                         ),
                         const Text("Abstractive"),
@@ -190,7 +216,13 @@ class _AudioSummarizeState extends State<AudioSummarize> {
 
             // Start/Stop Listening Button
             FloatingActionButton(
-              onPressed: _isListening ? _stopListening : _startListening,
+              onPressed: () {
+                try {
+                  _isListening ? _stopListening() : _startListening();
+                } catch (e) {
+                  print("Error toggling listening: $e");
+                }
+              },
               backgroundColor: _isListening ? Colors.red : Colors.green,
               child: Icon(_isListening ? Icons.stop : Icons.mic, color: Colors.white),
             ),
