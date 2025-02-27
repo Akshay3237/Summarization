@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:textsummarize/dependencies/constant.dart';
 
 typedef void StreamStateCallback(MediaStream stream);
 
@@ -187,7 +188,7 @@ class Signaling {
       RTCVideoRenderer remoteVideo,
       ) async {
     var stream = await navigator.mediaDevices
-        .getUserMedia({'video': true, 'audio': false});
+        .getUserMedia(Constant.config);
 
     localVideo.srcObject = stream;
     localStream = stream;

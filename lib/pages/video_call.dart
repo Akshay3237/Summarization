@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:textsummarize/dependencies/dependencies.dart';
-import 'package:textsummarize/models/Pair.dart';
-
-import 'package:textsummarize/services/IServiceVideoCall.dart';
-import '../services/IUserService.dart';
-import 'CallScreen.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'signaling.dart';
 
 class VideoCallPage extends StatefulWidget {
   @override
@@ -12,79 +9,72 @@ class VideoCallPage extends StatefulWidget {
 }
 
 class _VideoCallPageState extends State<VideoCallPage> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _callIdController = TextEditingController();
-  final IUserService _userService = Injection.getInstance<IUserService>(IUserService.typeName, true);
-  final IServiceVideoCall _callService = Injection.getInstance<IServiceVideoCall>(IServiceVideoCall.typeName, true);
-  String _callStatus = "Idle"; // Status to show (Idle, Calling, Pending, etc.)
-  String? _callId;
+  late Signaling signaling;
+  RTCVideoRenderer localRenderer = RTCVideoRenderer();
+  RTCVideoRenderer remoteRenderer = RTCVideoRenderer();
+  String? roomId;
+  bool isRoomCreated = false;
+  TextEditingController roomIdController = TextEditingController();
 
-  void _startCall() async {
-    String receiverEmail = _emailController.text.trim();
-    // Find user by email
-    Pair<bool, Object> response = await _userService.findByMail(receiverEmail);
+  @override
+  void initState() {
+    super.initState();
+    initRenderers();
+    setupSignaling();
+  }
 
-    if (response.first == false) {
+  Future<void> initRenderers() async {
+    await localRenderer.initialize();
+    await remoteRenderer.initialize();
+  }
+
+  void setupSignaling() {
+    signaling = Signaling();
+
+    signaling.onAddRemoteStream = (MediaStream stream) {
       setState(() {
-        _callStatus = "Invalid Email"; // Set status to show invalid email
+        remoteRenderer.srcObject = stream;
       });
-      return; // Exit if the email is not found
-    }
+    };
+  }
 
-    if (receiverEmail.isNotEmpty) {
-      setState(() {
-        _callStatus = "Calling $receiverEmail...";
-      });
+  @override
+  void dispose() {
+    localRenderer.dispose();
+    remoteRenderer.dispose();
+    roomIdController.dispose();
+    super.dispose();
+  }
 
-      // Initiate the call and get the call ID
-      _callId = await _callService.initiateCall(receiverEmail);
+  Future<void> startCall() async {
+    await signaling.openUserMedia(localRenderer, remoteRenderer);
+    roomId = await signaling.createRoom(remoteRenderer);
+    setState(() {
+      isRoomCreated = true;
+    });
+  }
 
-      // Navigate to CallScreen after initiating the call
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) =>CallScreen(meetingId: _callId!,isCaller: true,),
-          // builder: (context) =>CallScreen(meetingId: _callId!),
-        ),
-      );
+  Future<void> joinCall() async {
+    if (roomIdController.text.isNotEmpty) {
+      await signaling.openUserMedia(localRenderer, remoteRenderer);
+      await signaling.joinRoom(roomIdController.text, remoteRenderer);
     }
   }
 
-  void _joinCall() async {
-    String enteredCallId = _callIdController.text.trim();
-    if (enteredCallId.isNotEmpty) {
-      _callId = enteredCallId;
+  Future<void> endCall() async {
+    await signaling.hangUp(localRenderer);
+    setState(() {
+      isRoomCreated = false;
+      roomId = null;
+    });
+  }
 
-      // Check if the call exists and if it is pending
-      try {
-        String status = await _callService.getCallStatus(enteredCallId);
-        if (status == 'pending') {
-          await _callService.joinCall(enteredCallId);
-          setState(() {
-            _callStatus = "Joined the call...";
-          });
-          // Navigate to CallScreen after joining
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => CallScreen(meetingId: enteredCallId,isCaller: false,),
-              // builder: (context) => CallScreen(meetingId: enteredCallId),
-            ),
-          );
-        } else if (status == 'rejected') {
-          setState(() {
-            _callStatus = "Call has been rejected.";
-          });
-        } else {
-          setState(() {
-            _callStatus = "Call is already accepted.";
-          });
-        }
-      } catch (e) {
-        setState(() {
-          _callStatus = "Error: $e";
-        });
-      }
+  void copyToClipboard() {
+    if (roomId != null) {
+      Clipboard.setData(ClipboardData(text: roomId!));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Room ID copied to clipboard!")),
+      );
     }
   }
 
@@ -92,39 +82,64 @@ class _VideoCallPageState extends State<VideoCallPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Video Call")),
-      body: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          children: [
-            // Option to either create a call or join a call
-            TextField(
-              controller: _emailController,
-              decoration: InputDecoration(labelText: "Enter recipient's email"),
+      body: Column(
+        children: [
+          Expanded(child: RTCVideoView(localRenderer)),
+          Expanded(child: RTCVideoView(remoteRenderer)),
+
+          // Room ID Display & Copy Button
+          if (roomId != null)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Room ID: $roomId",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.copy),
+                    onPressed: copyToClipboard,
+                    tooltip: "Copy Room ID",
+                  ),
+                ],
+              ),
             ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _startCall,
-              child: Text("Start Call"),
+
+          // Room ID Input Field for Callee
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: roomIdController,
+              decoration: InputDecoration(
+                labelText: "Enter Room ID",
+                border: OutlineInputBorder(),
+              ),
             ),
-            SizedBox(height: 20),
-            Divider(),
-            // OR Join a call section
-            TextField(
-              controller: _callIdController,
-              decoration: InputDecoration(labelText: "Enter call ID to join"),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _joinCall,
-              child: Text("Join Call"),
-            ),
-            SizedBox(height: 20),
-            Text(
-              "Call Status: $_callStatus", // Show the current call status
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
+          ),
+
+          // Buttons
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton(
+                onPressed: startCall,
+                child: Text("Start Call"),
+              ),
+              SizedBox(width: 10),
+              ElevatedButton(
+                onPressed: joinCall,
+                child: Text("Join Call"),
+              ),
+              SizedBox(width: 10),
+              ElevatedButton(
+                onPressed: endCall,
+                child: Text("End Call"),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
