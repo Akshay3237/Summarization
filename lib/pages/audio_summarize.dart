@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:textsummarize/dependencies/dependencies.dart';
 import '../models/Pair.dart';
+import '../services/ISettingService.dart';
+import '../services/IStorageService.dart';
 import '../services/ISummarizeService.dart';
 
 class AudioSummarize extends StatefulWidget {
@@ -20,7 +22,9 @@ class _AudioSummarizeState extends State<AudioSummarize> {
 
   ISummarizeService summarizeService = Injection.getInstance<ISummarizeService>(
       ISummarizeService.typeName, true);
-
+  final ISettingService _settingService =  Injection.getInstance<ISettingService>(
+      ISettingService.typeName, true);
+  IStorageService storageService=Injection.getInstance<IStorageService>(IStorageService.typeName, true);
   @override
   void initState() {
     super.initState();
@@ -29,38 +33,53 @@ class _AudioSummarizeState extends State<AudioSummarize> {
     } catch (e) {
       print("Error initializing speech recognition: $e");
     }
+    _initializeSpeech();
   }
 
-  /// Start Listening
-  void _startListening() async {
+
+
+  Future<void> _initializeSpeech() async {
     try {
       bool available = await _speech.initialize(
-        onStatus: (status) => print("🔵 Status: $status"),
-        onError: (error) => print("❌ Error: $error"),
-        debugLogging: true,  // Enables debug logs
-        finalTimeout: Duration(seconds: 5),  // Timeout for speech recognition
-        options: [stt.SpeechToText.androidIntentLookup], // Ensures Android speech lookup
+        onStatus: (status) {
+          print("🔵 Status: $status");
+          if (status == "notListening" && _isListening) {
+            _restartListening(); // Restart automatically if it stops
+          }
+        },
+        onError: (error) {
+          print("❌ Error: $error");
+          _restartListening(); // Restart on error
+        },
+        debugLogging: true,
       );
-
-      if (available) {
-        setState(() => _isListening = true);
-        _speech.listen(
-          onResult: (result) {
-            setState(() {
-              textListened = result.recognizedWords; // Append text
-            });
-          },
-          listenMode: stt.ListenMode.dictation,
-          partialResults: true,
-        );
-      } else {
-        print("Speech recognition is not available on this device.");
-      }
     } catch (e) {
-      print("Error starting speech recognition: $e");
+      print("Error initializing speech recognition: $e");
+    }
+  }
+  /// Start Listening
+  void _startListening() {
+    if (!_isListening) {
+      _isListening = true;
+      _speech.listen(
+        onResult: (result) {
+          setState(() {
+            textListened = result.recognizedWords; // Append text
+          });
+        },
+        listenMode: stt.ListenMode.dictation, // Continuous mode
+        partialResults: true,
+      );
     }
   }
 
+  void _restartListening() async {
+    if (!_speech.isListening && _isListening) {
+      _isListening=false;
+      await Future.delayed(Duration(milliseconds: 100)); // Small delay to prevent beeping
+      _startListening();
+    }
+  }
   /// Stop Listening
   void _stopListening() {
     try {
@@ -71,7 +90,7 @@ class _AudioSummarizeState extends State<AudioSummarize> {
     }
   }
 
-  /// Summarize Transcribed Text
+  // Summarize Transcribed Text
   Future<void> _summarizeText() async {
     try {
       String lengthText = _lengthController.text.trim();
@@ -95,6 +114,12 @@ class _AudioSummarizeState extends State<AudioSummarize> {
       setState(() {
         _summary = result.second;
       });
+      bool isStore=await _settingService.isAudioSummaryEnabled();
+      if(result.first && isStore){
+        storageService.storeSummaryGeneratedFromText(text: textListened, summary: result.second, fromWhich: "fromaudio", length: maxLength);
+      }
+
+
     } catch (e) {
       print("Error summarizing text: $e");
       setState(() {
@@ -106,6 +131,7 @@ class _AudioSummarizeState extends State<AudioSummarize> {
       });
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

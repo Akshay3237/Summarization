@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:textsummarize/dependencies/dependencies.dart';
+import 'package:textsummarize/services/IStorageService.dart';
 import '../models/Pair.dart';
+import '../services/ISettingService.dart';
 import '../services/ISummarizeService.dart';
 
 class TextSummarizerPage extends StatefulWidget {
@@ -20,6 +22,9 @@ class _TextSummarizerPageState extends State<TextSummarizerPage> {
   ISummarizeService summarizeService = Injection.getInstance<ISummarizeService>(
       ISummarizeService.typeName, true);
 
+  final ISettingService _settingService =  Injection.getInstance<ISettingService>(
+      ISettingService.typeName, true);
+  IStorageService storageService=Injection.getInstance<IStorageService>(IStorageService.typeName, true);
   Future<void> _summarizeText() async {
     String inputText = _textController.text.trim();
     String lengthText = _lengthController.text.trim();
@@ -40,13 +45,18 @@ class _TextSummarizerPageState extends State<TextSummarizerPage> {
     try {
       Pair<bool, List<String>> result =
       await summarizeService.getSummary(inputText, maxLength, _summaryType);
-
+      bool isStore=await _settingService.isTextSummaryEnabled();
       setState(() {
         _summary = result.first ? result.second : result.second;
       });
+      if(result.first){
+        if(isStore){
+          storageService.storeSummaryGeneratedFromText(text: inputText, summary: _summary, fromWhich: "fromtext", length: maxLength);
+        }
+      }
     } catch (e) {
       setState(() {
-        _summary = ["An error occurred while summarizing."];
+        _summary = ["An error occurred while summarizing."+e.toString()];
       });
     } finally {
       setState(() {
