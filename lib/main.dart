@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:textsummarize/dependencies/dependencies.dart';
 import 'package:textsummarize/models/Pair.dart';
-import 'package:textsummarize/pages/CallScreen.dart';
 import 'package:textsummarize/pages/home.dart';
 import 'package:textsummarize/services/IAuthenticateService.dart';
 import './pages/login.dart';
@@ -37,14 +36,6 @@ void main() async {
   bool isAuthenticated = authResult.first;
   runApp(MyApp(isAuthenticated: isAuthenticated));
 }
-
-// void main() {
-//   runApp(MaterialApp(
-//     home: CallScreen(meetingId: "123456",isCaller: true,), // Example meeting ID
-//     // home: CallScreen(meetingId: "123456"),
-//   ));
-// }
-
 class MyApp extends StatelessWidget {
   final bool isAuthenticated;
 

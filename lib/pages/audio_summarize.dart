@@ -12,7 +12,7 @@ class AudioSummarize extends StatefulWidget {
 }
 
 class _AudioSummarizeState extends State<AudioSummarize> {
-  late stt.SpeechToText _speech;
+  stt.SpeechToText speech = stt.SpeechToText();
   bool _isListening = false;
   String textListened = ""; // Stores all spoken text
   final TextEditingController _lengthController = TextEditingController(text: "150");
@@ -28,68 +28,38 @@ class _AudioSummarizeState extends State<AudioSummarize> {
   @override
   void initState() {
     super.initState();
-    try {
-      _speech = stt.SpeechToText();
-    } catch (e) {
-      print("Error initializing speech recognition: $e");
-    }
-    _initializeSpeech();
+    _initSpeechToText();
   }
 
 
-
-  Future<void> _initializeSpeech() async {
-    try {
-      bool available = await _speech.initialize(
-        onStatus: (status) {
-          print("🔵 Status: $status");
-          if (status == "notListening" && _isListening) {
-            _restartListening(); // Restart automatically if it stops
-          }
-        },
-        onError: (error) {
-          print("❌ Error: $error");
-          _restartListening(); // Restart on error
-        },
-        debugLogging: true,
-      );
-    } catch (e) {
-      print("Error initializing speech recognition: $e");
+  /// Initialize Speech-to-Text
+  Future<void> _initSpeechToText() async {
+    bool available = await speech.initialize(
+      onStatus: (status) => print('Speech Status: $status'),
+      onError: (error) => print('Speech Error: $error'),
+    );
+    if (available) {
+      setState(() {});
+    } else {
+      print("Speech-to-Text not available.");
     }
   }
-  /// Start Listening
-  void _startListening() {
-    if (!_isListening) {
-      _isListening = true;
-      _speech.listen(
+  /// Start or stop speech recognition
+  void _startListening() async {
+    if (_isListening) {
+     await speech.listen(
         onResult: (result) {
           setState(() {
-            textListened = result.recognizedWords; // Append text
+           textListened = result.recognizedWords;
           });
         },
-        listenMode: stt.ListenMode.dictation, // Continuous mode
-        partialResults: true,
       );
     }
   }
 
-  void _restartListening() async {
-    if (!_speech.isListening && _isListening) {
-      _isListening=false;
-      await Future.delayed(Duration(milliseconds: 100)); // Small delay to prevent beeping
-      _startListening();
-    }
+  void _stopListening(){
+  speech.stop();
   }
-  /// Stop Listening
-  void _stopListening() {
-    try {
-      setState(() => _isListening = false);
-      _speech.stop();
-    } catch (e) {
-      print("Error stopping speech recognition: $e");
-    }
-  }
-
   // Summarize Transcribed Text
   Future<void> _summarizeText() async {
     try {
@@ -244,7 +214,20 @@ class _AudioSummarizeState extends State<AudioSummarize> {
             FloatingActionButton(
               onPressed: () {
                 try {
-                  _isListening ? _stopListening() : _startListening();
+                  if(_isListening){
+                    setState(() {
+                      _isListening=false;
+                    });
+                    _stopListening();
+                  }
+                  else{
+                    setState(() {
+                      _isListening=true;
+                    });
+                    _startListening();
+                  }
+
+
                 } catch (e) {
                   print("Error toggling listening: $e");
                 }

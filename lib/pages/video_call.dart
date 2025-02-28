@@ -7,7 +7,7 @@ import '../models/Pair.dart';
 import '../services/ISettingService.dart';
 import '../services/IStorageService.dart';
 import '../services/ISummarizeService.dart';
-import 'signaling.dart';
+import '../dependencies/signaling.dart';
 
 class VideoCallPage extends StatefulWidget {
   @override

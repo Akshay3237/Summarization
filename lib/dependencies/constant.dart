@@ -14,5 +14,13 @@ class Constant{
       "facingMode": "user"
     }
   };
-
+  static const configAudio={
+    "audio": {
+      "echoCancellation": true,
+      "noiseSuppression": true,
+      "autoGainControl": true,
+      "allowAudioInputSharing": true, // ✅ Allows multiple apps to access the microphone
+    },
+    "video":false,
+  };
 }
