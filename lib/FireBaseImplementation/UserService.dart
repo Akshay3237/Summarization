@@ -5,8 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:textsummarize/models/Pair.dart';
 import 'package:textsummarize/models/User.dart';
 import 'package:textsummarize/services/IUserService.dart';
-
-import '../models/User.dart';
+import 'package:textsummarize/models/User.dart';
+import '../models/User.dart' as u;
 
 class FireBaseUserService implements IUserService{
 
@@ -14,15 +14,30 @@ class FireBaseUserService implements IUserService{
 
 
   @override
-  Future<Pair<bool, Object>> Update(u) {
-    // TODO: implement Update
-    throw UnimplementedError();
+  Future<Pair<bool, Object>> Update(u.User user) async {
+    try {
+      var currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        await _firestore.collection('users').doc(currentUser.uid).update(user.toJson());
+        return Pair(true, "User updated successfully");
+      }
+      return Pair(false, "User not logged in");
+    } catch (e) {
+      return Pair(false, "Error updating user: $e");
+    }
   }
 
   @override
-  Future<Pair<bool, Object>> findById(String Uid) {
-    // TODO: implement findById
-    throw UnimplementedError();
+  Future<Pair<bool, Object>> findById(String uid) async {
+    try {
+      DocumentSnapshot userDoc = await _firestore.collection('users').doc(uid).get();
+      if (userDoc.exists) {
+        return Pair(true, u.User.fromJson(userDoc.data() as Map<String, dynamic>));
+      }
+      return Pair(false, "User not found");
+    } catch (e) {
+      return Pair(false, "Error fetching user: $e");
+    }
   }
 
   @override

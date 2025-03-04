@@ -163,6 +163,7 @@ class _VideoCallPageState extends State<VideoCallPage> {
         }
     }
 
+
     print("Transcript saved to Firestore!");
   }
   void copyToClipboard() {

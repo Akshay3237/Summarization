@@ -4,7 +4,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
+import '../dependencies/dependencies.dart';
 import '../dependencies/signalingaudio.dart';
+import '../models/Pair.dart';
+import '../services/ISettingService.dart';
+import '../services/IStorageService.dart';
+import '../services/ISummarizeService.dart';
 
 class AudioCallPage extends StatefulWidget {
   const AudioCallPage({Key? key}) : super(key: key);
@@ -17,7 +22,11 @@ class _AudioCallPageState extends State<AudioCallPage> {
   final SignalingForAudio signaling = SignalingForAudio();
   stt.SpeechToText speech = stt.SpeechToText();
   TextEditingController _roomIdController = TextEditingController();
-
+  ISummarizeService _summarizeService = Injection.getInstance<ISummarizeService>(
+      ISummarizeService.typeName, true);
+  IStorageService _storageService=Injection.getInstance<IStorageService>(IStorageService.typeName, true);
+  final ISettingService _settingService =  Injection.getInstance<ISettingService>(
+      ISettingService.typeName, true);
   String _transcription = "";
   String? roomId;
 
@@ -78,7 +87,7 @@ class _AudioCallPageState extends State<AudioCallPage> {
     await signaling.joinRoom(enteredRoomId);
     setState(() {
       roomId = enteredRoomId;
-      _transcription = "Listening...";
+      _transcription = "";
     });
     _startListening();
   }
@@ -88,6 +97,32 @@ class _AudioCallPageState extends State<AudioCallPage> {
     try {
       await signaling.hangUp();
       await speech.stop();
+      var settings = await _settingService.getSettings();
+      if (settings != null) {
+        if (await _settingService.isAudioCallSummaryEnabled()) {
+         //do here
+          saveTranscriptAndSummaryToFirestore(_transcription);
+        } else {
+          // Show a snackbar message informing the user
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Video Call Summary is disabled1. Enable it from settings."),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+      else{
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Video Call Summary is disabled2. Enable it from settings."),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+
+
+
     } catch (e) {
       print("Error: $e");
     }
@@ -96,6 +131,26 @@ class _AudioCallPageState extends State<AudioCallPage> {
       _transcription = "";
       _roomIdController.clear();
     });
+  }
+
+  Future<void> saveTranscriptAndSummaryToFirestore(String transcript) async {
+    if(transcript.isNotEmpty){
+      int length=await _settingService.getAudioSummaryLength();
+      Pair<bool, List<String>> result =
+      await _summarizeService.getSummary(transcript,length, await _settingService.getVideoSummaryType());
+      if(result.first) {
+        _storageService.storeSummaryGeneratedFromText(text: transcript,
+            summary: result.second,
+            fromWhich: "fromaudiocall",
+            length:length);
+      }
+      else{
+        print("Error in summarize Audio call"+result.second.join(" "));
+      }
+    }
+
+
+    print("Transcript saved to Firestore!");
   }
 
   /// Copy Room ID to Clipboard
@@ -144,19 +199,21 @@ class _AudioCallPageState extends State<AudioCallPage> {
 
             // Action Buttons
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton(
                   onPressed: _createRoom,
-                  child: const Text('Create Room'),
+                  child: Text("Start Call"),
                 ),
+                SizedBox(width: 10),
                 ElevatedButton(
-                  onPressed: _joinRoom,
-                  child: const Text('Join Room'),
+                  onPressed:  _joinRoom,
+                  child: Text("Join Call"),
                 ),
+                SizedBox(width: 10),
                 ElevatedButton(
                   onPressed: _hangUp,
-                  child: const Text('Hang Up'),
+                  child: Text("End Call"),
                 ),
               ],
             ),
