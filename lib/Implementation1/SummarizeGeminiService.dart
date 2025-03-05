@@ -30,7 +30,9 @@ class SummarizeGeminiService implements ISummarizeService {
           "contents": [
             {
               "parts": [
-                {"text": "Assume Maximum number of words=$maxLength and summary type is $summaryType and Summarize this text' : $text '"}
+                {
+                  "text": "Summarize the following text with a maximum of $maxLength words in $summaryType style. Provide only the summary without any additional explanations, options, or suggestions. If the text is too small to summarize, respond with exactly: 'Text is too small.'\n\nText: '$text'"
+                }
               ]
             }
           ]
