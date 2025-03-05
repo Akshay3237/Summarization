@@ -198,25 +198,25 @@ class _AudioCallPageState extends State<AudioCallPage> {
             ),
 
             // Action Buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Wrap(
+              spacing: 10,
+              alignment: WrapAlignment.center,
               children: [
                 ElevatedButton(
                   onPressed: _createRoom,
                   child: Text("Start Call"),
                 ),
-                SizedBox(width: 10),
                 ElevatedButton(
-                  onPressed:  _joinRoom,
+                  onPressed: _joinRoom,
                   child: Text("Join Call"),
                 ),
-                SizedBox(width: 10),
                 ElevatedButton(
                   onPressed: _hangUp,
                   child: Text("End Call"),
                 ),
               ],
             ),
+
           ],
         ),
       ),

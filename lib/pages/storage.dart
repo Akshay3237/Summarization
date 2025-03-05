@@ -78,14 +78,16 @@ class _StoragePageState extends State<StoragePage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Summary Details"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Summary: $summary"),
-            const SizedBox(height: 10),
-            Text("Type: $selectedType"),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Summary: $summary"),
+              const SizedBox(height: 10),
+              Text("Type: $selectedType"),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -99,55 +101,59 @@ class _StoragePageState extends State<StoragePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return  Scaffold(
       appBar: AppBar(title: const Text('Storage')),
-      body: Column(
-        children: [
-          Wrap(
-            spacing: 8.0,
-            runSpacing: 8.0,
-            alignment: WrapAlignment.center,
-            children: [
-              _buildFetchButton("Show All", "All"),
-              _buildFetchButton("Text", "Text"),
-              _buildFetchButton("Voice", "Voice"),
-              _buildFetchButton("Video Call", "Video Call"),
-              _buildFetchButton("Audio Call", "Audio Call"),
-              _buildFetchButton("Image", "Image"),
-            ],
-          ),
-          const SizedBox(height: 10),
-          ElevatedButton(
-            onPressed: _deleteAllSummaries,
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text("Delete All"),
-          ),
-          const SizedBox(height: 10),
-          Expanded(
-            child: isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : summaries.isEmpty
-                ? const Center(child: Text("No summaries found"))
-                : ListView.builder(
-              itemCount: summaries.length,
-              itemBuilder: (context, index) {
-                String shortText = summaries[index].length > 20
-                    ? "${summaries[index].substring(0, 20)}..."
-                    : summaries[index];
-
-                return Card(
-                  margin: const EdgeInsets.all(8.0),
-                  child: ListTile(
-                    title: Text(shortText),
-                    onTap: () => _showFullSummary(summaries[index]),
-                  ),
-                );
-              },
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Wrap(
+              spacing: 8.0,
+              runSpacing: 8.0,
+              alignment: WrapAlignment.center,
+              children: [
+                _buildFetchButton("Show All", "All"),
+                _buildFetchButton("Text", "Text"),
+                _buildFetchButton("Voice", "Voice"),
+                _buildFetchButton("Video Call", "Video Call"),
+                _buildFetchButton("Audio Call", "Audio Call"),
+                _buildFetchButton("Image", "Image"),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: _deleteAllSummaries,
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text("Delete All"),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.6, // Limit ListView height
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : summaries.isEmpty
+                  ? const Center(child: Text("No summaries found"))
+                  : ListView.builder(
+                itemCount: summaries.length,
+                itemBuilder: (context, index) {
+                  String shortText = summaries[index].length > 20
+                      ? "${summaries[index].substring(0, 20)}..."
+                      : summaries[index];
+
+                  return Card(
+                    margin: const EdgeInsets.all(8.0),
+                    child: ListTile(
+                      title: Text(shortText),
+                      onTap: () => _showFullSummary(summaries[index]),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
+
   }
 
   Widget _buildFetchButton(String label, String type) {
